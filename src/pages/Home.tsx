@@ -1,27 +1,11 @@
 import { NextPage } from "next";
-import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
-import Link from "next/link";
-import { useEffect } from "react";
-import Button from "~/Components/Buttons/Button";
-import {
-  Navbar,
-  Sidebar,
-  Layout,
-  MuliColumnVideo,
-} from "~/Components/Components";
+import { Layout, MuliColumnVideo } from "~/Components/Components";
 import { ErrorMessage, LoadingMessage } from "~/Components/ErrorMessage";
-
 import { api } from "~/utils/api";
 
-const Home: NextPage = () => {
-  const { data, isLoading, error, refetch } =
-    api.video.getRandomVideos.useQuery(20, { enabled: false });
-  useEffect(() => {
-    if (!data) {
-      void refetch();
-    }
-  }, []);
+export const Home: NextPage = () => {
+  const { data, isLoading, error } = api.video.getRandomVideos.useQuery(20);
   const Error = () => {
     if (isLoading) {
       return <LoadingMessage />;
@@ -77,5 +61,3 @@ const Home: NextPage = () => {
     </>
   );
 };
-
-export default Home;

@@ -1,27 +1,19 @@
 import { NextPage } from "next";
-import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
-import Link from "next/link";
-import { useEffect } from "react";
-import Button from "~/Components/Buttons/Button";
-import {
-  Navbar,
-  Sidebar,
-  Layout,
-  MuliColumnVideo,
-} from "~/Components/Components";
+import { useRouter } from "next/router";
+import { Layout, SingleColumnVideo } from "~/Components/Components";
 import { ErrorMessage, LoadingMessage } from "~/Components/ErrorMessage";
 
 import { api } from "~/utils/api";
 
-const Home: NextPage = () => {
-  const { data, isLoading, error, refetch } =
-    api.video.getRandomVideos.useQuery(20, { enabled: false });
-  useEffect(() => {
-    if (!data) {
-      void refetch();
-    }
-  }, []);
+const SearchPage: NextPage = () => {
+  const router = useRouter();
+  const searchQuery = router.query.q;
+  const { data, isLoading, error } = api.video.getVideosBySearch.useQuery(
+    searchQuery as string,
+  );
+  console.log(data);
+
   const Error = () => {
     if (isLoading) {
       return <LoadingMessage />;
@@ -30,7 +22,7 @@ const Home: NextPage = () => {
         <ErrorMessage
           icon="GreenPlay"
           message="No Videos"
-          description="Sorry there is no videos at this time."
+          description="Sorry try another search result."
         />
       );
     } else {
@@ -52,22 +44,31 @@ const Home: NextPage = () => {
           <Error />
         ) : (
           <>
-            <MuliColumnVideo
+            <SingleColumnVideo
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
               videos={data?.videos.map((video) => ({
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 id: video?.id ?? "",
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 title: video?.title ?? "",
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 thumbnailUrl: video?.thumbnailUrl ?? "",
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 createdAt: video?.createdAt ?? new Date(),
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 views: video?.views ?? 0,
               }))}
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/ban-ts-comment
               // @ts-ignore
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
               users={data?.user.map((user) => ({
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 name: user?.name ?? "",
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 image: user?.image ?? "",
               }))}
             />
@@ -78,4 +79,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default SearchPage;
