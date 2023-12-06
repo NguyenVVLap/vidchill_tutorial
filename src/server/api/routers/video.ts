@@ -109,6 +109,40 @@ export const videoRouter = createTRPCRouter({
         viewer,
       };
     }),
+  getVideosByUserId: publicProcedure
+    .input(z.string())
+    .query(async ({ ctx, input }) => {
+      const videosWithUser = await ctx.db.video.findMany({
+        where: {
+          userId: input,
+          publish: true,
+        },
+        include: {
+          user: true,
+        },
+      });
+      // @ts-ignore
+      const videos = videosWithUser.map(({ user, ...video }) => video);
+      // @ts-ignore
+      const users = videosWithUser.map(({ user }) => user);
+      const videosWithCounts = await Promise.all(
+        // @ts-ignore
+        videos.map(async (video) => {
+          // @ts-ignore
+          const views = await ctx.db.videoEngagement.count({
+            where: {
+              videoId: video.id,
+              engagementType: EngagementType.VIEW,
+            },
+          });
+          return {
+            ...video,
+            views,
+          };
+        }),
+      );
+      return { videos: videosWithCounts, users: users };
+    }),
   getRandomVideos: publicProcedure
     .input(z.number())
     .query(async ({ ctx, input }) => {
