@@ -21,8 +21,7 @@ const ProfileVideos: NextPage = () => {
   );
 
   const errorTypes = !data ?? data?.videos?.length === 0 ?? error;
-  console.log(data);
-
+  
   const Error = () => {
     if (isLoading) {
       return <LoadingMessage />;

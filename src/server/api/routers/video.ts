@@ -5,13 +5,37 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable */
 
-import { EngagementType } from "@prisma/client";
-import { z } from "zod";
+import { EngagementType, PrismaClient } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
+import { string, z } from "zod";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+
+type Context = {
+  db: PrismaClient;
+};
+
+const checkVideoOwnership = async (
+  ctx: Context,
+  id: string,
+  userId: string,
+) => {
+  const video = await ctx.db.video.findUnique({
+    where: {
+      id: id,
+    },
+  });
+  if (!video ?? video?.userId !== userId) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Video not found",
+    });
+  }
+  return video;
+};
 
 export const videoRouter = createTRPCRouter({
   getVideoById: publicProcedure
@@ -265,5 +289,79 @@ export const videoRouter = createTRPCRouter({
         });
         return playlistHasVideo;
       }
+    }),
+  getRandomVideosExcept: publicProcedure
+    .input(
+      z.object({
+        limit: z.number(),
+        id: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // @ts-ignore
+      const videosWithUser = await ctx.db.video.findMany({
+        where: {
+          publish: true,
+          id: {
+            not: input.id,
+          },
+        },
+        include: {
+          user: true,
+        },
+      });
+      // @ts-ignore
+      const videos = videosWithUser.map(({ user, ...video }) => video);
+      // @ts-ignore
+      const users = videosWithUser.map(({ user }) => user);
+      const videosWithCounts = await Promise.all(
+        // @ts-ignore
+        videos.map(async (video) => {
+          // @ts-ignore
+          const views = await ctx.db.videoEngagement.count({
+            where: {
+              videoId: video.id,
+              engagementType: EngagementType.VIEW,
+            },
+          });
+          return {
+            ...video,
+            views,
+          };
+        }),
+      );
+      const indices = Array.from(
+        { length: videosWithCounts.length },
+        (_, i) => i,
+      );
+      for (let i = indices.length - 1; i >= 0; i--) {
+        if (indices[i] !== undefined) {
+          const j = Math.floor(Math.random() * (i + 1));
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+      }
+      const shuffledVideosWithCounts = indices.map((i) => videosWithCounts[i]);
+      const shuffledUsers = indices.map((i) => users[i]);
+
+      const randomVideos = shuffledVideosWithCounts.slice(0, input.limit);
+      const randomUsers = shuffledUsers.slice(0, input.limit);
+
+      return { videos: randomVideos, user: randomUsers };
+    }),
+  publishVideo: protectedProcedure
+    .input(z.object({ id: z.string(), userId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const video = await checkVideoOwnership(ctx, input.id, input.userId);
+      const publishVideo = await ctx.db.video.update({
+        where: {
+          id: video.id,
+        },
+        data: {
+          publish: !video.publish,
+        },
+      });
+      return publishVideo;
     }),
 });

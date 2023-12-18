@@ -103,7 +103,7 @@ export const videoEngagementRouter = createTRPCRouter({
           ctx,
           input.id,
           input.userId,
-          EngagementType.VIEW,
+          EngagementType.LIKE,
         );
       }
     }),

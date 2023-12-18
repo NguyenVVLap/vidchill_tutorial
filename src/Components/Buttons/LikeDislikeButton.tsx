@@ -27,6 +27,7 @@ export default function LikeDislikeButton({
       addDislikeMutation: api.videoEngagement.addDislike.useMutation(),
     });
   const { data: sessionData } = useSession();
+
   return (
     <div className="flex-end isolate inline-flex rounded-md shadow-sm">
       <button

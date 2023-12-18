@@ -49,30 +49,36 @@ const VideoPage: NextPage = () => {
     isLoading: sidebarLoading,
     error: sidebarError,
     refetch: refetchSidebarVideos,
-  } = api.video.getRandomVideos.useQuery(20, {
-    enabled: false,
-  });
+  } = api.video.getRandomVideosExcept.useQuery(
+    {
+      limit: 20,
+      id: videoId as string,
+    },
+    {
+      enabled: false,
+    },
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   const addViewMutation = api.videoEngagement.addViewCount.useMutation();
   const addView = (input: { id: string; userId: string }) => {
-    addViewMutation.mutate(input);
+    return new Promise<void>((resolve, reject) => {
+      addViewMutation.mutate(input);
+      resolve();
+    });
   };
-
-  useEffect(() => {
-    if (videoId) {
+  const handleAddView = async () => {
+    await addView({
+      id: videoId as string,
+      userId: sessionData ? sessionData.user.id : " ",
+    }).then(() => {
       void refetchVideoData();
-      addView({
-        id: videoId as string,
-        userId: sessionData ? sessionData.user.id : " ",
-      });
-    }
-  }, [videoId]);
+    });
+  };
   useEffect(() => {
-    if (!sidebarVideos) {
-      void refetchSidebarVideos();
-    }
-  }, []);
+    void handleAddView();
+    void refetchSidebarVideos();
+  }, [videoId]);
 
   const video = videoData?.video;
   const user = videoData?.user;
@@ -148,7 +154,7 @@ const VideoPage: NextPage = () => {
                             hasDisliked: viewer?.hasDisliked,
                           }}
                         />
-                        <SaveButton videoId={video?.id ?? ""}/>
+                        <SaveButton videoId={video?.id ?? ""} />
                       </div>
                     </div>
                     <div className="flex flex-row place-content-between gap-x-4">

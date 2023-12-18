@@ -2,10 +2,12 @@ import { NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Button from "~/Components/Buttons/Button";
+import { MultiColumnPlaylist } from "~/Components/Components";
 import { LoadingMessage, ErrorMessage } from "~/Components/ErrorMessage";
 import Plus from "~/Components/Icons/Plus";
 import Layout from "~/Components/Layout";
 import ProfileHeader from "~/Components/ProfileHeader";
+import { playlistRouter } from "~/server/api/routers/playlist";
 import { api } from "~/utils/api";
 
 const ProfilePlaylists: NextPage = () => {
@@ -47,9 +49,20 @@ const ProfilePlaylists: NextPage = () => {
           {errorTypes ? (
             <Error />
           ) : (
-            <>
-              <p>Hello world</p>
-            </>
+            <MultiColumnPlaylist
+              playlists={
+                data
+                  ? data.map((playlist) => ({
+                      id: playlist.id,
+                      title: playlist.title,
+                      description: playlist.description ?? "",
+                      videoCount: playlist.videoCount,
+                      playlistThumbnail: playlist?.playlistThumbnail ?? "",
+                      createdAt: playlist.createdAt,
+                    }))
+                  : []
+              }
+            />
           )}
         </>
       </Layout>

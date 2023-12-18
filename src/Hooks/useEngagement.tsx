@@ -1,5 +1,5 @@
 import { EngagementType } from "@prisma/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface useEngagementButtonProps {
   EngagementData: {
@@ -30,6 +30,14 @@ export function useEngagementButton({
     like: viewer.hasLiked,
     dislike: viewer.hasDisliked,
   });
+  useEffect(() => {
+    setLikeCount(EngagementData.likes);
+    setDislikeCount(EngagementData.dislikes);
+    setUserChoice({
+      like: viewer.hasLiked,
+      dislike: viewer.hasDisliked,
+    });
+  }, [viewer]);
   const handleEngagement =
     (
       engagementType: EngagementType,
