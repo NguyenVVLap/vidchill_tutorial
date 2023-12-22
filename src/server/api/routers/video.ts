@@ -364,4 +364,50 @@ export const videoRouter = createTRPCRouter({
       });
       return publishVideo;
     }),
+  deleteVideo: protectedProcedure
+    .input(z.object({ id: z.string(), userId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const video = await checkVideoOwnership(ctx, input.id, input.userId);
+      const deleteVideo = await ctx.db.video.delete({
+        where: {
+          id: video.id,
+        },
+      });
+      return deleteVideo;
+    }),
+  updateVideo: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        userId: z.string(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        thumbnailUrl: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const video = await checkVideoOwnership(ctx, input.id, input.userId);
+      const updatedVideo = await ctx.db.video.update({
+        where: {
+          id: video.id,
+        },
+        data: {
+          title: input.title ?? video.title,
+          description: input.description ?? video.description,
+          thumbnailUrl: input.thumbnailUrl ?? video.thumbnailUrl,
+        },
+      });
+    }),
+  createVideo: protectedProcedure
+    .input(z.object({ userId: z.string(), videoUrl: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const video = await ctx.db.video.create({
+        data: {
+          userId: input.userId,
+          videoUrl: input.videoUrl,
+          publish: false,
+        },
+      });
+      return video;
+    }),
 });

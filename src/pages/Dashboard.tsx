@@ -1,7 +1,12 @@
 import { NextPage } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
-import { PublishedButton } from "~/Components/Buttons/Buttons";
+import {
+  DeleteButton,
+  EditButton,
+  PublishedButton,
+  UploadButton,
+} from "~/Components/Buttons/Buttons";
 import { Layout, Thumbnail } from "~/Components/Components";
 import { LoadingMessage, ErrorMessage } from "~/Components/ErrorMessage";
 import { GreenEye, GreenHeart, GreenUserCheck } from "~/Components/Icons/Icons";
@@ -75,7 +80,7 @@ const Dashboard: NextPage = () => {
                     Track and manage your channel and videos
                   </p>
                 </div>
-                {/* Upload button here */}
+                <UploadButton refetch={refetch} />
               </div>
               <dl className="mt-5 grid grid-cols-1 divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-200 shadow-sm md:grid-cols-3 md:divide-x md:divide-y-0">
                 {stats.map((item) => (
@@ -136,16 +141,19 @@ const Dashboard: NextPage = () => {
                         //Publish button here
                         <tr key={video.id}>
                           <PublishedButton
-                            video={{ id: video.id, published: video.publish }}
+                            video={{
+                              id: video.id ?? "",
+                              published: video.publish ?? false,
+                            }}
                           />
                           <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0">
                             <div className="flex">
-                              <div className="h-16 w-16 flex-shrink-0">
+                              <div className="flex h-16 w-16 flex-shrink-0 items-center">
                                 <Thumbnail
                                   thumbnailUrl={video.thumbnailUrl ?? ""}
                                 />
                               </div>
-                              <div className="ml-4 font-medium text-gray-900">
+                              <div className="ml-4 flex items-center font-medium text-gray-900">
                                 {video.title}
                               </div>
                             </div>
@@ -160,6 +168,23 @@ const Dashboard: NextPage = () => {
                           </td>
                           <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-600">
                             {video.createdAt.toLocaleDateString()}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
+                            <div className="flex flex-row gap-2">
+                              <DeleteButton
+                                videoId={video.id}
+                                refetch={refetch}
+                              />
+                              <EditButton
+                                video={{
+                                  id: video?.id ?? "",
+                                  title: video?.title ?? "",
+                                  description: video?.description ?? "",
+                                  thumbnailUrl: video?.thumbnailUrl ?? "",
+                                }}
+                                refetch={refetch}
+                              />
+                            </div>
                           </td>
                         </tr>
                       ))}
